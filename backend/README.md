@@ -19,7 +19,7 @@ Verify connection
 > \c discogs-database
 ```
 
-
+docker start postgres-docker-database
 
 
 ## TODO

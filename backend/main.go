@@ -1,13 +1,14 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"time"
 
 	"discogsbackend/internal/apiclient"
-	"discogsbackend/internal/inmemorydatabase"
-	"discogsbackend/internal/routes/inmemoryroutes"
+	"discogsbackend/internal/postgresclient"
+	"discogsbackend/internal/routes"
 
 	"github.com/spf13/viper"
 )
@@ -22,26 +23,32 @@ func main() {
 	// Read configuration values
 	discogsAPIURL := viper.GetString("DISCOGS_API_URL")
 	discogsToken := viper.GetString("DISCOGS_TOKEN")
-
-	// Initialize InMemory client
-	imClient := inmemorydatabase.NewInMemoryClient()
+	databaseURL := viper.GetString("DATABASE_URL")
 
 	// Initialize Discogs client
 	discogsClient := apiclient.NewDiscogsClient(&http.Client{}, discogsAPIURL, discogsToken)
 
-	// Create our server with the InMemory client and Discogs client
-	srv := inmemoryroutes.NewServer(imClient, discogsClient)
+	// Initialize Postgres client
+	ctx := context.Background()
+	postgresClient, err := postgresclient.NewPostgresClient(ctx, databaseURL)
+	if err != nil {
+		log.Fatalf("Failed to initialize Postgres client: %v", err)
+	}
+	defer postgresClient.Close()
+
+	// Create our server with the Postgres client and Discogs client
+	srv := routes.NewServer(discogsClient, postgresClient)
 
 	// Set up the HTTP server
 	httpServer := &http.Server{
 		Addr:         ":8080",
-		Handler:      corsMiddleware(srv.Routes()), // Our net/http mux with CORS middleware
+		Handler:      corsMiddleware(srv.Routes()),
 		ReadTimeout:  20 * time.Second,
 		WriteTimeout: 20 * time.Second,
 	}
 
 	log.Println("Starting server on :8080")
-	err := httpServer.ListenAndServe()
+	err = httpServer.ListenAndServe()
 	if err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}

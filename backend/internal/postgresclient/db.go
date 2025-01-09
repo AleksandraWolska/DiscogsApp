@@ -3,11 +3,24 @@ package postgresclient
 import (
 	"context"
 	"database/sql"
+	"discogsbackend/internal/models"
 	"fmt"
 	"log"
 
 	_ "github.com/lib/pq"
 )
+
+type PostgresClientInterface interface {
+	CreateSchema(ctx context.Context) error
+	WriteToDB(ctx context.Context, releases []models.DiscogsApiRelease) error
+	FetchAllReleases(ctx context.Context) ([]models.DiscogsRelease, error)
+	FetchReleasesByArtist(ctx context.Context, artistName string) ([]models.DiscogsRelease, error)
+	FetchReleasesByFormat(ctx context.Context, formatName string) ([]models.DiscogsRelease, error)
+	FetchReleasesByYear(ctx context.Context, yearStr string) ([]models.DiscogsRelease, error)
+	FetchAllArtists(ctx context.Context) ([]models.Artist, error)
+	FetchAllFormats(ctx context.Context) ([]models.Format, error)
+	Close() error
+}
 
 // PostgresClient holds a reference to the sql.DB object
 type PostgresClient struct {
