@@ -8,7 +8,6 @@ import (
 type DiscogsClient struct {
 	httpClient *http.Client
 	baseURL    string
-	token      string // if using OAuth or token-based auth
 }
 
 type DiscogsClientInterface interface {
@@ -19,6 +18,5 @@ func NewDiscogsClient(httpClient *http.Client, baseURL, token string) *DiscogsCl
 	return &DiscogsClient{
 		httpClient: httpClient,
 		baseURL:    baseURL,
-		token:      token,
 	}
 }

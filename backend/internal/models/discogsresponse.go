@@ -1,23 +1,12 @@
 package models
 
+type Pagination struct {
+	Pages int `json:"pages"`
+}
 type DiscogsApiResponse struct {
 	Releases   []DiscogsApiRelease `json:"releases"`
-	Pagination struct {
-		Pages int `json:"pages"`
-	} `json:"pagination"`
+	Pagination Pagination          `json:"pagination"`
 }
-
-// type Release struct {
-// 	ID    int
-// 	Title string
-// 	Year  int
-// 	// ...
-// }
-
-// type Artist struct {
-// 	ID   int
-// 	Name string
-// }
 
 // Representation of a discogs release
 type DiscogsApiRelease struct {

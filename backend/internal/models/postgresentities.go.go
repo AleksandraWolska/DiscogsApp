@@ -11,17 +11,17 @@ type Release struct {
 }
 
 type Artist struct {
-	ID   int
+	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
 
 type Format struct {
-	ID   int
-	Name string
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }
 
 type Status struct {
-	ID   int
+	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
 
@@ -29,13 +29,13 @@ type Status struct {
 
 // Representation of a discogs release
 type DiscogsRelease struct {
-	ID          int    `json:"id"`
-	Title       string `json:"title"`
-	Year        int    `json:"year"`
-	Artists     []Artist
-	CatalogNo   string `json:"catno"`
-	Thumb       string `json:"thumb"`
-	ResourceURL string `json:"resource_url"`
-	Formats     []Format
-	Status      string `json:"status"`
+	ID          int      `json:"id"`
+	Title       string   `json:"title"`
+	Year        int      `json:"year"`
+	Artists     []Artist `json:"artists"`
+	CatalogNo   string   `json:"catno"`
+	Thumb       string   `json:"thumb"`
+	ResourceURL string   `json:"resource_url"`
+	Formats     []Format `json:"formats"`
+	Status      string   `json:"status"`
 }

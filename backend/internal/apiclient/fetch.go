@@ -18,7 +18,7 @@ func (dc *DiscogsClient) FetchOnLabel(labelID string) ([]models.DiscogsApiReleas
 		if err != nil {
 			return nil, err
 		}
-		req.Header.Set("User-Agent", "MyDiscogsApp/1.0 +http://myapp.example.com")
+		req.Header.Set("User-Agent", "someusergaent")
 
 		resp, err := dc.httpClient.Do(req)
 		if err != nil {

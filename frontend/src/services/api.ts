@@ -15,3 +15,29 @@ export const searchReleases = async (query: string) => {
   }
   return response.json();
 };
+
+export const fetchArtists = async () => {
+  const response = await fetch(`${API_BASE_URL}/artists`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch artists");
+  }
+  return response.json();
+};
+
+export const fetchFormats = async () => {
+  const response = await fetch(`${API_BASE_URL}/formats`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch formats");
+  }
+  return response.json();
+};
+
+
+
+export const fetchRelations = async () => {
+  const response = await fetch(`${API_BASE_URL}/relations`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch relations");
+  }
+  return response.json();
+};

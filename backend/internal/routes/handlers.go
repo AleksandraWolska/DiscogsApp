@@ -1,7 +1,9 @@
 package routes
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,8 +12,30 @@ import (
 	"discogsbackend/internal/models"
 )
 
-// fetchLabelHandler fetches a label ID from the URL path, calls the Discogs API,
-// then writes the fetched releases to the PostgreSQL database.
+// That is pretty much duplication to below method
+func (s *Server) SetUpService(labelID string) error {
+
+	err := s.Postgres.CreateSchema(context.Background())
+	if err != nil {
+		return errors.New(fmt.Sprintf("Failed to create schema: %v", err))
+	}
+
+	fetchReleases, err := s.Discogs.FetchOnLabel(labelID)
+	if err != nil {
+		return errors.New(fmt.Sprintf("Failed to fetch releases: %v", err))
+	}
+
+	err = s.Postgres.WriteToDB(context.Background(), fetchReleases)
+	if err != nil {
+		return errors.New(fmt.Sprintf("Failed to write releases to DB: %v", err))
+	}
+
+	log.Printf("Successfully fetched and stored releases for label %q\n", labelID)
+
+	return nil
+}
+
+// This is not needed, remaining from first app version
 func (s *Server) fetchLabelHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	labelID := strings.TrimPrefix(r.URL.Path, "/fetch/label/")
@@ -20,26 +44,22 @@ func (s *Server) fetchLabelHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Call the Discogs API
 	fetchReleases, err := s.Discogs.FetchOnLabel(labelID)
 	if err != nil {
 		httpError(w, fmt.Sprintf("Failed to fetch releases: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	// Write the fetched releases to the PostgreSQL database
 	err = s.Postgres.WriteToDB(ctx, fetchReleases)
 	if err != nil {
 		httpError(w, fmt.Sprintf("Failed to write releases to DB: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	// Respond with a success message
 	log.Printf("Successfully fetched and stored releases for label %q\n", labelID)
 	fmt.Fprintf(w, "Successfully fetched and stored releases for label %q\n", labelID)
 }
 
-// allReleasesHandler handles fetching all releases
 func (s *Server) allReleasesHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -55,49 +75,48 @@ func (s *Server) allReleasesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Encode results as JSON
 	if err := json.NewEncoder(w).Encode(results); err != nil {
 		httpError(w, fmt.Sprintf("Failed to encode results: %v", err), http.StatusInternalServerError)
 	}
 }
 
-// searchHandler handles queries by artist, format, or year, returning aggregated results.
-func (s *Server) searchHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	q := r.URL.Query()
-	artist := q.Get("artist")
-	format := q.Get("format")
-	year := q.Get("year")
+// SQL was never my strong feature. 3 hours are way too little, this search does not work
 
-	var (
-		results []models.DiscogsRelease
-		err     error
-	)
+// func (s *Server) searchHandler(w http.ResponseWriter, r *http.Request) {
+// 	ctx := r.Context()
+// 	q := r.URL.Query()
+// 	artist := q.Get("artist")
+// 	format := q.Get("format")
+// 	year := q.Get("year")
 
-	switch {
-	case artist != "":
-		results, err = s.Postgres.FetchReleasesByArtist(ctx, artist)
-	case format != "":
-		results, err = s.Postgres.FetchReleasesByFormat(ctx, format)
-	case year != "":
-		results, err = s.Postgres.FetchReleasesByYear(ctx, year)
-	default:
-		httpError(w, "No valid query parameter provided (artist, format, or year)", http.StatusBadRequest)
-		return
-	}
+// 	var (
+// 		results []models.DiscogsRelease
+// 		err     error
+// 	)
 
-	if err != nil {
-		httpError(w, fmt.Sprintf("Failed to fetch releases: %v", err), http.StatusInternalServerError)
-		return
-	}
+// 	switch {
+// 	case artist != "":
+// 		results, err = s.Postgres.FetchReleasesByArtist(ctx, artist)
+// 	case format != "":
+// 		results, err = s.Postgres.FetchReleasesByFormat(ctx, format)
+// 	case year != "":
+// 		results, err = s.Postgres.FetchReleasesByYear(ctx, year)
+// 	default:
+// 		httpError(w, "No valid query parameter provided (artist, format, or year)", http.StatusBadRequest)
+// 		return
+// 	}
 
-	// Encode results as JSON
-	if err := json.NewEncoder(w).Encode(results); err != nil {
-		httpError(w, fmt.Sprintf("Failed to encode results: %v", err), http.StatusInternalServerError)
-	}
-}
+// 	if err != nil {
+// 		httpError(w, fmt.Sprintf("Failed to fetch releases: %v", err), http.StatusInternalServerError)
+// 		return
+// 	}
 
-// fetchFormatsHandler handles fetching all formats
+// 	// Encode results as JSON
+// 	if err := json.NewEncoder(w).Encode(results); err != nil {
+// 		httpError(w, fmt.Sprintf("Failed to encode results: %v", err), http.StatusInternalServerError)
+// 	}
+// }
+
 func (s *Server) fetchFormatsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -107,13 +126,11 @@ func (s *Server) fetchFormatsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Encode results as JSON
 	if err := json.NewEncoder(w).Encode(formats); err != nil {
 		httpError(w, fmt.Sprintf("Failed to encode results: %v", err), http.StatusInternalServerError)
 	}
 }
 
-// fetchArtistsHandler handles fetching all artists
 func (s *Server) fetchArtistsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -123,13 +140,11 @@ func (s *Server) fetchArtistsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Encode results as JSON
 	if err := json.NewEncoder(w).Encode(artists); err != nil {
 		httpError(w, fmt.Sprintf("Failed to encode results: %v", err), http.StatusInternalServerError)
 	}
 }
 
-// createSchemaHandler creates the necessary tables and schemas in the PostgreSQL database.
 func (s *Server) createSchemaHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	err := s.Postgres.CreateSchema(ctx)
@@ -140,18 +155,19 @@ func (s *Server) createSchemaHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Schema created successfully")
 }
 
-// httpError sends an HTTP error response with the specified message and status code.
 func httpError(w http.ResponseWriter, message string, code int) {
 	http.Error(w, message, code)
 	log.Printf("HTTP %d - %s", code, message)
 }
 
-// // parseID parses an integer ID from the URL path.
-// func parseID(strID string) (int, error) {
-// 	var id int
-// 	_, err := fmt.Sscanf(strID, "%d", &id)
-// 	if err != nil {
-// 		return 0, fmt.Errorf("invalid ID format: %w", err)
-// 	}
-// 	return id, nil
-// }
+func (s *Server) ListTablesAndRelationsHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+	relations, err := s.Postgres.ListTablesAndRelations(ctx)
+	if err != nil {
+		http.Error(w, "Failed to list tables and relations", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(relations)
+}

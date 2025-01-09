@@ -1,15 +1,26 @@
 import React from "react";
-import { Card, CardContent, CardMedia, Typography, Link, Grid } from "@mui/material";
+import { Card, CardContent, CardMedia, Typography, Paper, Box } from "@mui/material";
+
+interface Artist {
+  id: number;
+  name: string;
+}
+
+interface Format {
+  id: number;
+  name: string;
+}
 
 interface Release {
   id: number;
   title: string;
   year: number;
-  artist: string;
-  format: string;
+  artists: Artist[];
   catalogNo: string;
   thumb: string;
   resourceURL: string;
+  formats: Format[];
+  status: string;
 }
 
 interface ReleaseListProps {
@@ -18,9 +29,9 @@ interface ReleaseListProps {
 
 const ReleaseList: React.FC<ReleaseListProps> = ({ releases }) => {
   return (
-    <Grid container spacing={2}>
-      {releases.map((release) => (
-        <Grid item xs={12} sm={6} md={4} key={release.id}>
+    <Box display="flex" flexWrap="wrap" justifyContent="center" gap={2}>
+      {releases.map((release, index) => (
+        <Paper key={`${release.id}-${index}`} elevation={3} sx={{ width: 300, margin: 2 }}>
           <Card>
             <CardMedia
               component="img"
@@ -33,25 +44,23 @@ const ReleaseList: React.FC<ReleaseListProps> = ({ releases }) => {
                 {release.title}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Artist: {release.artist}
+                Artists: {release.artists?.map((artist) => artist.name).join(", ")}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Year: {release.year}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Format: {release.format}
+                Formats: {release.formats?.map((format) => format.name).join(", ")}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Catalog No: {release.catalogNo}
               </Typography>
-              <Link href={release.resourceURL} target="_blank" rel="noopener">
-                More Info
-              </Link>
+
             </CardContent>
           </Card>
-        </Grid>
+        </Paper>
       ))}
-    </Grid>
+    </Box>
   );
 };
 

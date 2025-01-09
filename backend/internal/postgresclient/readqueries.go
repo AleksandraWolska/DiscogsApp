@@ -25,16 +25,6 @@ func (pc *PostgresClient) FetchReleasesByYear(ctx context.Context, yearStr strin
 	return pc.fetchReleases(ctx, query, year)
 }
 
-// FetchReleasesByArtist returns a list of releases for a given artist
-func (pc *PostgresClient) FetchReleasesByArtist(ctx context.Context, artistName string) ([]models.DiscogsRelease, error) {
-	return pc.fetchReleasesByRelationField(ctx, "releases_artists", "artist_id", artistName)
-}
-
-// FetchReleasesByFormat returns a list of releases for a given format
-func (pc *PostgresClient) FetchReleasesByFormat(ctx context.Context, formatName string) ([]models.DiscogsRelease, error) {
-	return pc.fetchReleasesByRelationField(ctx, "releases_formats", "format_id", formatName)
-}
-
 // FetchAllReleases returns a list of all releases
 func (pc *PostgresClient) FetchAllReleases(ctx context.Context) ([]models.DiscogsRelease, error) {
 	query := `
@@ -162,19 +152,6 @@ func (pc *PostgresClient) fetchReleases(ctx context.Context, query string, args 
 	}
 
 	return results, nil
-}
-
-// fetchReleasesByRelationField fetches releases by a related field (e.g., artist or format)
-func (pc *PostgresClient) fetchReleasesByRelationField(ctx context.Context, relationTable string, relationJoinColumn string, relationName string) ([]models.DiscogsRelease, error) {
-	query := fmt.Sprintf(`
-        SELECT r.id, r.title, r.year, r.catalog_no, r.thumb, r.resource_url
-        FROM releases r
-        JOIN %s rf ON r.id = rf.release_id
-        JOIN %s f ON f.id = rf.%s
-        WHERE f.name ILIKE $1
-    `, relationTable, relationTable[:len(relationTable)-1], relationJoinColumn)
-
-	return pc.fetchReleases(ctx, query, "%"+relationName+"%")
 }
 
 // buildDiscogsRelease constructs a DiscogsRelease from a Release

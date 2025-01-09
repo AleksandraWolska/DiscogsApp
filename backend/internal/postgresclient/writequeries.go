@@ -6,7 +6,6 @@ import (
 	"fmt"
 )
 
-// CreateSchema creates the necessary tables and schemas in the PostgreSQL database
 func (pc *PostgresClient) CreateSchema(ctx context.Context) error {
 	schema := `
     CREATE TABLE IF NOT EXISTS artists (
@@ -53,7 +52,6 @@ func (pc *PostgresClient) CreateSchema(ctx context.Context) error {
 	return nil
 }
 
-// WriteToDB inserts the fetched releases (and their related artists, formats, and statuses) into the DB.
 func (pc *PostgresClient) WriteToDB(ctx context.Context, releases []models.DiscogsApiRelease) error {
 	tx, err := pc.db.BeginTx(ctx, nil)
 	if err != nil {

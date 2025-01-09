@@ -36,6 +36,11 @@ func main() {
 	}
 	defer postgresClient.Close()
 
+	// Create database schema
+	if err := postgresClient.CreateSchema(ctx); err != nil {
+		log.Fatalf("Failed to create database schema: %v", err)
+	}
+
 	// Create our server with the Postgres client and Discogs client
 	srv := routes.NewServer(discogsClient, postgresClient)
 
@@ -46,12 +51,14 @@ func main() {
 		ReadTimeout:  20 * time.Second,
 		WriteTimeout: 20 * time.Second,
 	}
+	srv.SetUpService("2175451")
 
 	log.Println("Starting server on :8080")
 	err = httpServer.ListenAndServe()
 	if err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}
+
 }
 
 // corsMiddleware adds CORS headers to the response

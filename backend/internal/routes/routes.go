@@ -6,6 +6,7 @@ import (
 	"net/http"
 )
 
+// This should be 'handler' interface....
 type ServerInterface interface {
 	Routes() http.Handler
 	FetchLabelHandler(w http.ResponseWriter, r *http.Request)
@@ -16,13 +17,12 @@ type ServerInterface interface {
 	CreateSchemaHandler(w http.ResponseWriter, r *http.Request)
 }
 
-// Server holds references to external dependencies
+// ... I am pretty sure this should not be in routes package, and handler should not hold that, its more for a service struct
 type Server struct {
 	Discogs  apiclient.DiscogsClientInterface
 	Postgres postgresclient.PostgresClientInterface
 }
 
-// NewServer constructs a new Server. You might pass additional dependencies here.
 func NewServer(discogsClient apiclient.DiscogsClientInterface, pgClient postgresclient.PostgresClientInterface) *Server {
 	return &Server{
 		Discogs:  discogsClient,
@@ -30,27 +30,27 @@ func NewServer(discogsClient apiclient.DiscogsClientInterface, pgClient postgres
 	}
 }
 
-// Routes creates an http.ServeMux to handle all routes.
 func (s *Server) Routes() http.Handler {
 	mux := http.NewServeMux()
 
-	// Define route paths
 	const (
-		allReleasesPath  = "/all"
-		searchPath       = "/search"
-		fetchLabelPath   = "/fetch/label/"
-		createSchemaPath = "/createschema"
-		fetchFormatsPath = "/formats"
-		fetchArtistsPath = "/artists"
+		allReleasesPath          = "/all"
+		searchPath               = "/search"
+		fetchLabelPath           = "/fetch/label/"
+		createSchemaPath         = "/createschema"
+		fetchFormatsPath         = "/formats"
+		fetchArtistsPath         = "/artists"
+		fetchRelationsSchemaPath = "/relations"
 	)
 
 	// Register route handlers
 	mux.HandleFunc(allReleasesPath, s.allReleasesHandler)
-	mux.HandleFunc(searchPath, s.searchHandler)
+	// mux.HandleFunc(searchPath, s.searchHandler)
 	mux.HandleFunc(fetchLabelPath, s.fetchLabelHandler)
 	mux.HandleFunc(createSchemaPath, s.createSchemaHandler)
 	mux.HandleFunc(fetchFormatsPath, s.fetchFormatsHandler)
 	mux.HandleFunc(fetchArtistsPath, s.fetchArtistsHandler)
+	mux.HandleFunc(fetchRelationsSchemaPath, s.ListTablesAndRelationsHandler)
 
 	return mux
 }
